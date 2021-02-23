@@ -1,0 +1,137 @@
+-----Query 1-----
+WITH most_earned_artist
+AS (SELECT
+  ar.ArtistId,
+  ar.Name AS artist_name,
+  SUM(il.UnitPrice * il.Quantity) AS earned
+FROM Artist ar
+JOIN Album al
+  ON ar.ArtistId = al.ArtistId
+JOIN Track t
+  ON al.AlbumId = t.AlbumId
+JOIN InvoiceLine il
+  ON t.TrackId = il.TrackId
+GROUP BY 1,
+         2
+ORDER BY 3 DESC
+LIMIT 1)
+SELECT
+  ar.ArtistId,
+  ar.Name AS artist_name,
+  g.Name AS genre_type,
+  SUM(il.UnitPrice * il.Quantity) AS earned
+FROM Artist ar
+JOIN Album al
+  ON ar.ArtistId = al.ArtistId
+JOIN Track t
+  ON al.AlbumId = t.AlbumId
+JOIN Genre g
+  ON t.GenreId = g.GenreId
+JOIN InvoiceLine il
+  ON t.TrackId = il.TrackId
+WHERE ar.Name = (SELECT artist_name
+                FROM most_earned_artist)
+GROUP BY 1,2,3
+ORDER BY 4 DESC;
+
+-----Result------
+ArtistId  artist_name    genre_type     earned
+"90"	 "Iron Maiden"	 "Metal"	"69.3"
+"90"	 "Iron Maiden"	 "Rock"	        "53.46"
+"90"	 "Iron Maiden"	 "Heavy Metal"  "11.88"
+"90"	 "Iron Maiden"	 "Blues"	"3.96"
+
+----Query 2------
+SELECT
+  g.Name AS genre_type,
+  COUNT(*) AS num_purchases
+FROM Genre g
+JOIN Track t
+  ON g.GenreId = t.GenreId
+JOIN InvoiceLine il
+  ON t.TrackId = il.TrackId
+GROUP BY 1
+ORDER BY 2 DESC;
+
+----Result------
+genre_type            num_purchases
+"Rock"	                "835"
+"Latin"   	        "386"
+"Metal" 	        "264"
+"Alternative & Punk"	"244"
+"Jazz"	                "80"
+"Blues"         	"61"
+"TV Shows"	        "47"
+"Classical"	        "41"
+"R&B/Soul"	        "41"
+"Reggae"	        "30"
+"Drama"	 		"29"
+"Pop"			"28"
+"Sci Fi & Fantasy"	"20"
+"Soundtrack"		"20"
+"Hip Hop/Rap"		"17"
+"Bossa Nova"		"15"
+"Alternative"		"14"
+"World"			"13"
+"Electronica/Dance"	"12"
+"Heavy Metal"		"12"
+"Easy Listening"	"10"
+"Comedy"		"9"
+"Rock And Roll"		"6"
+"Science Fiction"	"6"
+
+
+----Query 3------
+WITH customer_type
+AS (SELECT
+  CASE
+    WHEN Company IS NULL
+    THEN 1
+    ELSE 0
+  END AS domestic_customer,
+  CASE
+    WHEN Company IS NULL
+    THEN 0
+    ELSE 1
+  END AS business_customer
+FROM Customer)
+SELECT
+  SUM(domestic_customer) AS domestic_customers,
+  SUM(business_customer) AS business_customers
+FROM customer_type;
+
+----Result------
+domestic_customer     business_customer
+"49"	              "10"
+
+----Query 4------
+SELECT
+  e.FirstName || " " || e.LastName AS sales_agent,
+  STRFTIME('%Y', i.InvoiceDate) AS year,
+  COUNT(*) AS sales
+FROM Employee e
+JOIN Customer c
+  ON e.EmployeeId = c.SupportRepId
+JOIN Invoice i
+  ON c.CustomerId = i.CustomerId
+WHERE e.Title = "Sales Support Agent"
+GROUP BY 1,2
+ORDER BY 1,2;
+
+----Result------
+sales_agent      year   sales
+"Jane Peacock"	"2009"	"25"
+"Jane Peacock"	"2010"	"34"
+"Jane Peacock"	"2011"	"28"
+"Jane Peacock"	"2012"	"28"
+"Jane Peacock"	"2013"	"31"
+"Margaret Park"	"2009"	"30"
+"Margaret Park"	"2010"	"27"
+"Margaret Park"	"2011"	"28"
+"Margaret Park"	"2012"	"29"
+"Margaret Park"	"2013"	"26"
+"Steve Johnson"	"2009"	"28"
+"Steve Johnson"	"2010"	"22"
+"Steve Johnson"	"2011"	"27"
+"Steve Johnson"	"2012"	"26"
+"Steve Johnson"	"2013"	"23"
